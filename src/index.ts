@@ -39,6 +39,25 @@ const HOP_BY_HOP = new Set([
   "content-length",
 ]);
 
+/**
+ * Headers injected by the edge or by a reverse proxy in front of mist
+ * (cf-* from Cloudflare, X-Real-IP / X-Forwarded-* from client-side hops).
+ * A direct official client never sends these: forwarding them would leak the
+ * real client IP to the upstream and mark the request as relayed.
+ * SDK self-reported headers (user-agent, x-stainless-*, x-app) are kept on
+ * purpose — dropping them would make the shape deviate from a normal client.
+ */
+const EDGE_INJECTED = new Set([
+  "cdn-loop",
+  "true-client-ip",
+  "x-client-ip",
+  "x-real-ip",
+  "x-forwarded-for",
+  "x-forwarded-host",
+  "x-forwarded-proto",
+  "x-forwarded-server",
+]);
+
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data, null, 2), {
     status,
@@ -87,6 +106,8 @@ function buildUpstreamHeaders(req: Request, env: Env, cloaked: boolean): Headers
     if (HOP_BY_HOP.has(lower)) continue;
     if (lower === "authorization" || lower === "x-api-key") continue;
     if (lower === "anthropic-beta") continue;
+    if (lower.startsWith("cf-")) continue;
+    if (EDGE_INJECTED.has(lower)) continue;
     out.set(k, v);
   }
 

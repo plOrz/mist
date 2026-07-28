@@ -19,6 +19,7 @@ mist **stores nothing, logs nothing, and inspects nothing** beyond what is requi
 - **Pure passthrough** — streaming, tool use, vision: whatever the Messages API supports, mist forwards untouched
 - **Long-lived token, zero state** — one ~1-year token held in Cloudflare's secret store; no refresh flow, no KV, no database. Clients authenticate to mist with your own `PROXY_API_KEY`; the real token never leaves the edge
 - **Request normalization** — outgoing requests are shaped to match the official client, preserving full model compatibility (optional, can be disabled)
+- **Header hygiene** — edge- and proxy-injected headers (`cf-*`, `x-real-ip`, `x-forwarded-*`, `true-client-ip`) are stripped before forwarding, so the upstream never sees your real client IP or hop chain
 - **One-click deploy** — no resources to provision
 
 ## Recommended use
