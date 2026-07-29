@@ -12,7 +12,7 @@ Your requests leave from a clean, fixed edge egress — not from your device.
 
 Official OAuth login flows collect client-side device and environment signals. mist sits in between as a transparent relay: your client talks to mist, mist talks to `api.anthropic.com`. Upstream sees a uniform, minimal request shape from a consistent edge location — your device fingerprint and network environment stay out of the picture.
 
-mist **stores nothing, logs nothing, and inspects nothing** beyond what is required to normalize auth headers in flight. It is a pipe, not a product.
+mist **stores nothing and inspects nothing** beyond what is required to normalize auth headers in flight. It is a pipe, not a product. The one exception: when the upstream returns an error or the proxy itself throws, mist writes a single structured line to Cloudflare Workers Logs (path, ray id, upstream status, a short excerpt of the upstream error) so failures can be diagnosed. Credentials, API keys, and request bodies are never logged.
 
 ## What it is
 
@@ -123,7 +123,7 @@ Anthropic API 的隐私透传中继，跑在 Cloudflare Workers 上。
 
 官方 OAuth 登录流程会采集客户端的设备与环境信息。mist 夹在中间做透明中继：你的客户端连 mist，mist 连 `api.anthropic.com`。上游看到的只是一个来自固定边缘节点的、形态统一的干净请求——你的设备指纹和网络环境不会暴露。
 
-mist **不存储、不记录、不窥探**任何请求内容，只在转发途中做必要的认证头归一化。它是一根管子，不是一个产品。
+mist **不存储、不窥探**任何请求内容，只在转发途中做必要的认证头归一化。它是一根管子，不是一个产品。唯一的例外：当上游返回错误或代理自身抛异常时，mist 会向 Cloudflare Workers Logs 写一条结构化日志（路径、ray id、上游状态码、错误摘要），方便排查问题。凭据、API key 和请求体永远不会被记录。
 
 ## 推荐使用
 

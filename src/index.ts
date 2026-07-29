@@ -182,6 +182,25 @@ async function upstreamBody(req: Request, env: Env): Promise<BodyInit | undefine
   return cloakSystem(text);
 }
 
+/**
+ * Error visibility without breaking the pipe: on upstream failure or proxy
+ * exception, emit one structured line to Workers Logs. Metadata only —
+ * never tokens, API keys, or request bodies.
+ */
+function logError(event: string, req: Request, fields: Record<string, unknown>): void {
+  console.error(
+    JSON.stringify({
+      event,
+      ts: new Date().toISOString(),
+      method: req.method,
+      path: new URL(req.url).pathname,
+      ray: req.headers.get("cf-ray"),
+      ua: req.headers.get("user-agent"),
+      ...fields,
+    }),
+  );
+}
+
 async function proxyAnthropic(req: Request, env: Env): Promise<Response> {
   if (!env.CLAUDE_OAUTH_TOKEN?.trim()) {
     return json(
@@ -199,6 +218,15 @@ async function proxyAnthropic(req: Request, env: Env): Promise<Response> {
   if (body !== undefined) init.body = body;
 
   const upstream = await fetch(upstreamUrl(req), init);
+
+  if (!upstream.ok) {
+    const detail = await upstream
+      .clone()
+      .text()
+      .then((t) => t.slice(0, 512))
+      .catch(() => "");
+    logError("upstream_error", req, { upstreamStatus: upstream.status, detail });
+  }
 
   const headers = new Headers(upstream.headers);
   headers.set("cache-control", "no-store");
@@ -264,7 +292,9 @@ export default {
     try {
       return await proxyAnthropic(req, env);
     } catch (e) {
-      return json({ error: e instanceof Error ? e.message : String(e) }, 502);
+      const message = e instanceof Error ? e.message : String(e);
+      logError("proxy_exception", req, { error: message });
+      return json({ error: message }, 502);
     }
   },
 };
