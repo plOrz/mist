@@ -1,15 +1,16 @@
 {
   "name": "mist",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Privacy passthrough relay for the Anthropic API, on Cloudflare Workers",
+  "description": "Privacy passthrough relay for Anthropic & OpenRouter, on Cloudflare Workers",
   "license": "MIT",
   "repository": "github:wusaki0723/mist",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260714.1",
